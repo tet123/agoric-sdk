@@ -16,6 +16,7 @@ export function makeVatManagerFactory({
   startSubprocessWorkerNode,
   startXSnap,
   gcTools,
+  defaultManagerType,
 }) {
   const localFactory = makeLocalVatManagerFactory({
     allVatPowers,
@@ -74,7 +75,7 @@ export function makeVatManagerFactory({
   // returns promise for new vatManager
   function vatManagerFactory(vatID, managerOptions) {
     validateManagerOptions(managerOptions);
-    const { managerType = 'local', setup, bundle } = managerOptions;
+    const { managerType = defaultManagerType, setup, bundle } = managerOptions;
 
     if (managerType === 'local') {
       if (setup) {

@@ -5,7 +5,9 @@ import path from 'path';
 async function main(basedir, argv) {
   const dir = path.resolve(`${__dirname}/..`, basedir);
   const config = await loadBasedir(dir);
-  const controller = await buildVatController(config, argv);
+  const controller = await buildVatController(config, argv, {
+    defaultManagerType: 'xs-worker',
+  });
   await controller.run();
   return controller.dump();
 }

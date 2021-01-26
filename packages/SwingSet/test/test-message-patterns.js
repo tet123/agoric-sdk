@@ -73,6 +73,7 @@ test.before(async t => {
     creationOptions: {
       enablePipelining: true,
       enableSetup: true,
+      managerType: 'local',
     },
   };
   const moreVatTP = { bundle: kernelBundles.vattp };
@@ -97,7 +98,11 @@ test.before(async t => {
 
 export async function runVatsLocally(t, name) {
   const { localConfig: config, kernelBundles } = t.context.data;
-  const c = await buildVatController(config, [name], { kernelBundles });
+  const c = await buildVatController(config, [name], {
+    kernelBundles,
+    defaultManagerType: 'xs-worker',
+  });
+  t.teardown(c.shutdown);
   // await runWithTrace(c);
   await c.run();
   return c.dump().log;
@@ -134,7 +139,10 @@ export async function runVatsInComms(t, name) {
   };
   const hostStorage = initSwingStore().storage;
   await initializeSwingset(config, [name], hostStorage, { kernelBundles });
-  const c = await makeSwingsetController(hostStorage, deviceEndowments);
+  const c = await makeSwingsetController(hostStorage, deviceEndowments, {
+    defaultManagerType: 'xs-worker',
+  });
+  t.teardown(c.shutdown);
 
   // await runWithTrace(c);
   await c.run();
