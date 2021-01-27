@@ -41,8 +41,11 @@ export function makeXsSubprocessFactory({
   async function createFromBundle(vatID, bundle, managerOptions) {
     parentLog('createFromBundle', { vatID });
     const { vatParameters, virtualObjectCacheSize } = managerOptions;
-    assert(!managerOptions.metered, 'not supported yet');
-    assert(!managerOptions.enableSetup, 'not supported at all');
+    assert(!managerOptions.metered, 'xs-worker: metered not supported yet');
+    assert(
+      !managerOptions.enableSetup,
+      'xs-worker: enableSetup not supported at all',
+    );
     if (managerOptions.enableInternalMetering) {
       // TODO: warn+ignore, rather than throw, because the kernel enables it
       // for all vats, because the Spawner still needs it. When the kernel
