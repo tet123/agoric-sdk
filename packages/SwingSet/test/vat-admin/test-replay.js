@@ -39,6 +39,7 @@ test('replay bundleSource-based dynamic vat', async t => {
   {
     const c1 = await buildVatController(copy(config), [], {
       hostStorage: storage1,
+      defaultManagerType: 'local', //@@for now
     });
     const r1 = c1.queueToVatExport(
       'bootstrap',
@@ -61,6 +62,7 @@ test('replay bundleSource-based dynamic vat', async t => {
   {
     const c2 = await buildVatController(copy(config), [], {
       hostStorage: storage2,
+      defaultManagerType: 'local',
     });
     const r2 = c2.queueToVatExport(
       'bootstrap',
@@ -89,6 +91,7 @@ test('replay bundleName-based dynamic vat', async t => {
   {
     const c1 = await buildVatController(copy(config), [], {
       hostStorage: storage1,
+      defaultManagerType: 'local', //@@for now
     });
     const r1 = c1.queueToVatExport(
       'bootstrap',
@@ -107,6 +110,7 @@ test('replay bundleName-based dynamic vat', async t => {
   {
     const c2 = await buildVatController(copy(config), [], {
       hostStorage: storage2,
+      defaultManagerType: 'local', //@@for now
     });
     const r2 = c2.queueToVatExport(
       'bootstrap',

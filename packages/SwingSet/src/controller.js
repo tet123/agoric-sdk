@@ -37,6 +37,8 @@ function makeConsole(tag) {
   return harden(cons);
 }
 
+const WORKER_TYPE = process.env.WORKER_TYPE;
+
 export async function makeSwingsetController(
   hostStorage = initSwingStore().storage,
   deviceEndowments = {},
@@ -50,7 +52,7 @@ export async function makeSwingsetController(
     debugPrefix = '',
     slogFile,
     testTrackDecref,
-    defaultManagerType = 'local',
+    defaultManagerType = WORKER_TYPE || 'local',
   } = runtimeOptions;
   if (typeof Compartment === 'undefined') {
     throw Error('SES must be installed before calling makeSwingsetController');
@@ -167,7 +169,7 @@ export async function makeSwingsetController(
       name,
       stdout: 'inherit',
       stderr: 'inherit',
-      // debug: true,
+      debug: !!process.env.XSNAP_DEBUG, //@@AMBIENT!
     });
 
     const bundles = {

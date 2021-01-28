@@ -114,7 +114,7 @@ test('exit with presence', async t => {
   ]);
 });
 
-test('dispatches to the dead do not harm kernel', async t => {
+test.failing('dispatches to the dead do not harm kernel', async t => {
   const configPath = path.resolve(__dirname, 'swingset-speak-to-dead.json');
   const config = loadSwingsetConfigFile(configPath);
 

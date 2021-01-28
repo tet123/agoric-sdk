@@ -107,7 +107,7 @@ export function makeXsSubprocessFactory({
 
     /** @type { (msg: Uint8Array) => Uint8Array } */
     function handleCommand(msg) {
-      parentLog('handleCommand', { length: msg.byteLength });
+      // parentLog('handleCommand', { length: msg.byteLength });
       const tagged = handleUpstream(JSON.parse(decoder.decode(msg)));
       return encoder.encode(JSON.stringify(tagged));
     }
@@ -115,7 +115,7 @@ export function makeXsSubprocessFactory({
     // start the worker and establish a connection
     const { worker, bundles } = startXSnap(`${vatID}`, handleCommand);
     for await (const [it, superCode] of Object.entries(bundles)) {
-      parentLog('bundle', it);
+      parentLog('eval bundle', it);
       assert(
         superCode.moduleFormat === 'getExport',
         details`${it} unexpected: ${superCode.moduleFormat}`,
@@ -125,7 +125,7 @@ export function makeXsSubprocessFactory({
 
     /** @type { (item: Tagged) => Promise<Tagged> } */
     async function issueTagged(item) {
-      parentLog('issueTagged', item[0]);
+      parentLog(item[0], '...', item.length - 1);
       const txt = await worker.issueStringCommand(JSON.stringify(item));
       const reply = JSON.parse(txt);
       assert(Array.isArray(reply));

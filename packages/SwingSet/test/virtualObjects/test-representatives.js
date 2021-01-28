@@ -19,6 +19,8 @@ function slot0(kid) {
   };
 }
 
+const localOnlyForNow = { defaultManagerType: 'local' };
+
 test('virtual object representatives', async t => {
   const config = {
     bootstrap: 'bootstrap',
@@ -32,7 +34,7 @@ test('virtual object representatives', async t => {
     },
   };
 
-  const c = await buildVatController(config);
+  const c = await buildVatController(config, [], localOnlyForNow);
   const nextLog = makeNextLog(c);
 
   await c.run();

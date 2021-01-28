@@ -75,9 +75,16 @@ export function makeVatManagerFactory({
   // returns promise for new vatManager
   function vatManagerFactory(vatID, managerOptions) {
     validateManagerOptions(managerOptions);
-    const { managerType = defaultManagerType, setup, bundle } = managerOptions;
+    const {
+      managerType = defaultManagerType,
+      setup,
+      bundle,
+      metered,
+      enableSetup,
+    } = managerOptions;
 
-    if (managerType === 'local') {
+    //console.log('@@', { managerType, enableSetup, metered, vatID });
+    if (managerType === 'local' || metered || enableSetup) {
       if (setup) {
         return localFactory.createFromSetup(vatID, setup, managerOptions);
       }

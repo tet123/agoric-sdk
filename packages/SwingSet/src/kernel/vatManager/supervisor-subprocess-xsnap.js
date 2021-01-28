@@ -14,7 +14,7 @@ const decoder = new TextDecoder();
 function workerLog(first, ...args) {
   // @ts-ignore
   // eslint-disable-next-line
-  // print(`---worker: ${first}`, ...args);
+  // console.log(`---worker: ${first}`, ...args);
 }
 
 workerLog(`supervisor started`);
