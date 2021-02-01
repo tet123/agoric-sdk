@@ -59,6 +59,7 @@ function managerPort(issueCommand) {
      * @template T
      */
     handlerFrom(f) {
+      const lastResort = encoder.encode(`exception from ${f.name}`).buffer;
       return msg => {
         const report = {};
         f(decode(msg))
@@ -67,7 +68,10 @@ function managerPort(issueCommand) {
             report.result = encode(item);
           })
           .catch(err => {
-            report.result = encode(['err', err.message]);
+            report.result = encode(['err', f.name, err.message]);
+          })
+          .catch(_err => {
+            report.result = lastResort;
           });
         return report;
       };
@@ -82,7 +86,9 @@ function managerPort(issueCommand) {
 function runAndWait(f, errmsg) {
   Promise.resolve()
     .then(f)
-    .then(undefined, err => workerLog(`doProcess: ${errmsg}:`, err));
+    .then(undefined, err => {
+      workerLog(`doProcess: ${errmsg}:`, err.message);
+    });
   return waitUntilQuiescent();
 }
 
