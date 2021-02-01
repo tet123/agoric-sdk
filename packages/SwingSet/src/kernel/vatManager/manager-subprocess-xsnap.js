@@ -39,7 +39,7 @@ export function makeXsSubprocessFactory({
    * @param { ManagerOptions } managerOptions
    */
   async function createFromBundle(vatID, bundle, managerOptions) {
-    parentLog('createFromBundle', { vatID });
+    parentLog(vatID, 'createFromBundle', { vatID });
     const { vatParameters, virtualObjectCacheSize } = managerOptions;
     assert(!managerOptions.metered, 'xs-worker: metered not supported yet');
     assert(
@@ -75,10 +75,10 @@ export function makeXsSubprocessFactory({
 
     /** @type { (item: Tagged) => unknown } */
     function handleUpstream([type, ...args]) {
-      parentLog(`handleUpstream`, type, args.length);
+      parentLog(vatID, `handleUpstream`, type, args.length);
       switch (type) {
         case 'syscall': {
-          parentLog(`syscall`, args);
+          parentLog(vatID, `syscall`, args);
           const [scTag, ...vatSyscallArgs] = args;
           return handleSyscall([scTag, ...vatSyscallArgs]);
         }
@@ -115,7 +115,7 @@ export function makeXsSubprocessFactory({
     // start the worker and establish a connection
     const { worker, bundles } = startXSnap(`${vatID}`, handleCommand);
     for await (const [it, superCode] of Object.entries(bundles)) {
-      parentLog('eval bundle', it);
+      parentLog(vatID, 'eval bundle', it);
       assert(
         superCode.moduleFormat === 'getExport',
         details`${it} unexpected: ${superCode.moduleFormat}`,
@@ -133,7 +133,7 @@ export function makeXsSubprocessFactory({
       return [tag, ...rest];
     }
 
-    parentLog(`instructing worker to load bundle..`);
+    parentLog(vatID, `instructing worker to load bundle..`);
     const bundleReply = await issueTagged([
       'setBundle',
       vatID,
@@ -142,7 +142,7 @@ export function makeXsSubprocessFactory({
       virtualObjectCacheSize,
     ]);
     if (bundleReply[0] === 'dispatchReady') {
-      parentLog(`bundle loaded. dispatch ready.`);
+      parentLog(vatID, `bundle loaded. dispatch ready.`);
     } else {
       throw new Error(`failed to setBundle: ${bundleReply}`);
     }
@@ -180,7 +180,7 @@ export function makeXsSubprocessFactory({
       shutdown,
     });
 
-    parentLog('manager', Object.keys(manager));
+    parentLog(vatID, 'manager', Object.keys(manager));
     return manager;
   }
 
