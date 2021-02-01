@@ -310,6 +310,7 @@ int main(int argc, char* argv[])
 			char* nsbuf;
 			size_t nslen;
 			int readError = fxReadNetString(fromParent, &nsbuf, &nslen);
+			int writeError = 0;
 			if (readError != 0) {
 				if (feof(fromParent)) {
 					break;
@@ -324,39 +325,31 @@ int main(int argc, char* argv[])
 			case '?':
 			case 'e':
 				error = 0;
-				xsSlot report;
 				xsBeginHost(machine);
 				{
-					xsVars(1);
-					report = xsUndefined;
+					xsVars(3);
 					xsTry {
 						if (command == '?') {
 							xsVar(0) = xsArrayBuffer(nsbuf + 1, nslen - 1);
-							report = xsCall1(xsGlobal, xsID("handleCommand"), xsVar(0));
+							xsVar(1) = xsCall1(xsGlobal, xsID("handleCommand"), xsVar(0));
 						} else {
 							xsVar(0) = xsStringBuffer(nsbuf + 1, nslen - 1);
-							report = xsCall1(xsGlobal, xsID("eval"), xsVar(0));
+							xsVar(1) = xsCall1(xsGlobal, xsID("eval"), xsVar(0));
 						}
-						xsRemember(report);
 					}
 					xsCatch {
 						if (xsTypeOf(xsException) != xsUndefinedType) {
 							// fprintf(stderr, "%c: %s\n", command, xsToString(xsException));
 							error = 1;
-							report = xsException;
-							xsRemember(report);
+							xsVar(1) = xsException;
 							xsException = xsUndefined;
 						}
 					}
 				}
-				xsEndHost(machine);
 				fxRunLoop(machine);
-				int writeError;
-				xsBeginHost(machine);
 				{
-					xsSlot result = xsUndefined;
 					if (error) {
-						xsStringValue message = xsToString(report);
+						xsStringValue message = xsToString(xsVar(1));
 						writeError = fxWriteNetString(toParent, '!', message, strlen(message));
 						// fprintf(stderr, "error: %d, writeError: %d %s\n", error, writeError, message);
 					} else {
@@ -364,31 +357,28 @@ int main(int argc, char* argv[])
 						txInteger responseLength = 0;
 						// fprintf(stderr, "report: %d %s\n", xsTypeOf(report), xsToString(report));
 						xsTry {
-							if (xsTypeOf(report) == xsReferenceType && xsHas(report, xsID("result"))) {
-								result = xsGet(report, xsID("result"));
+							if (xsTypeOf(xsVar(1)) == xsReferenceType && xsHas(xsVar(1), xsID("result"))) {
+								xsVar(2) = xsGet(xsVar(1), xsID("result"));
 							} else {
-								result = report;
+								xsVar(2) = xsVar(1);
 							}
 							// fprintf(stderr, "result: %d %s\n", xsTypeOf(result), xsToString(result));
-							if (xsIsInstanceOf(result, xsArrayBufferPrototype)) {
-								responseLength = xsGetArrayBufferLength(result);
-								response = xsToArrayBuffer(result);
+							if (xsIsInstanceOf(xsVar(2), xsArrayBufferPrototype)) {
+								responseLength = xsGetArrayBufferLength(xsVar(2));
+								response = xsToArrayBuffer(xsVar(2));
 							}
 						}
 						xsCatch {
 							if (xsTypeOf(xsException) != xsUndefinedType) {
 								fprintf(stderr, "%c computing response %d %d: %s: %s\n", command,
-												xsTypeOf(report), xsTypeOf(result),
-												xsToString(result),
+												xsTypeOf(xsVar(1)), xsTypeOf(xsVar(2)),
+												xsToString(xsVar(2)),
 												xsToString(xsException));
 								xsException = xsUndefined;
 							}
 						}
 						// fprintf(stderr, "response of %d bytes\n", responseLength);
 						writeError = fxWriteNetString(toParent, '.', response, responseLength);
-					}
-					if (xsTypeOf(report) != xsUndefinedType) {
-						xsForget(report);
 					}
 				}
 				xsEndHost(machine);
@@ -940,9 +930,11 @@ void fx_setTimer(txMachine* the, txNumber interval, txBoolean repeat)
 	job->when = ((txNumber)(tv.tv_sec) * 1000.0) + ((txNumber)(tv.tv_usec) / 1000.0) + interval;
 	job->function.kind = mxArgv(0)->kind;
 	job->function.value = mxArgv(0)->value;
+	xsRemember(job->function);
 	if (mxArgc > 2) {
 		job->argument.kind = mxArgv(2)->kind;
 		job->argument.value = mxArgv(2)->value;
+		xsRemember(job->argument);
 	}
 	fxNewHostObject(the, C_NULL);
 	fxSetHostData(the, the->stack, job);
@@ -1038,6 +1030,8 @@ void fxRunLoop(txMachine* the)
 				}
 				else {
 					*address = job->next;
+					xsForget(job->function);
+					xsForget(job->argument);
 					c_free(job);
 				}
 				break;
