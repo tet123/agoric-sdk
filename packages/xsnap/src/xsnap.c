@@ -387,7 +387,9 @@ int main(int argc, char* argv[])
 						// fprintf(stderr, "response of %d bytes\n", responseLength);
 						writeError = fxWriteNetString(toParent, '.', response, responseLength);
 					}
-					xsForget(report);
+					if (xsTypeOf(report) != xsUndefinedType) {
+						xsForget(report);
+					}
 				}
 				xsEndHost(machine);
 				if (writeError != 0) {
