@@ -328,6 +328,7 @@ int main(int argc, char* argv[])
 				xsBeginHost(machine);
 				{
 					xsVars(1);
+					report = xsUndefined;
 					xsTry {
 						if (command == '?') {
 							xsVar(0) = xsArrayBuffer(nsbuf + 1, nslen - 1);
@@ -370,8 +371,8 @@ int main(int argc, char* argv[])
 							}
 							// fprintf(stderr, "result: %d %s\n", xsTypeOf(result), xsToString(result));
 							if (xsIsInstanceOf(result, xsArrayBufferPrototype)) {
-								response = xsToArrayBuffer(result);
 								responseLength = xsGetArrayBufferLength(result);
+								response = xsToArrayBuffer(result);
 							}
 						}
 						xsCatch {
