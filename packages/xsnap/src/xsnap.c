@@ -29,6 +29,7 @@ struct sxJob {
 	txMachine* the;
 	txNumber when;
 	txJobCallback callback;
+	txSlot self;
 	txSlot function;
 	txSlot argument;
 	txNumber interval;
@@ -46,7 +47,7 @@ static void fxPrintUsage();
 static void fx_issueCommand(xsMachine *the);
 static void fx_Array_prototype_meter(xsMachine* the);
 
-// extern void fx_clearTimer(txMachine* the);
+extern void fx_clearTimer(txMachine* the);
 static void fx_destroyTimer(void* data);
 // static void fx_evalScript(xsMachine* the);
 // static void fx_gc(xsMachine* the);
@@ -875,24 +876,15 @@ void fx_setImmediate(txMachine* the)
 }
 
 
-// void fx_clearTimer(txMachine* the)
-// {
-// 	txJob* data = fxGetHostData(the, mxThis);
-// 	if (data) {
-// 		txJob* job;
-// 		txJob** address;
-// 		address = (txJob**)&(the->timerJobs);
-// 		while ((job = *address)) {
-// 			if (job == data) {
-// 				*address = job->next;
-// 				c_free(job);
-// 				break;
-// 			}
-// 			address = &(job->next);
-// 		}
-// 		fxSetHostData(the, mxThis, NULL);
-// 	}
-// }
+void fx_clearTimer(txMachine* the)
+{
+	txJob* job = xsGetHostData(xsArg(0));
+	if (job) {
+        xsForget(job->self);
+        xsSetHostData(xsArg(0), NULL);
+		job->the = NULL;
+	}
+}
 
 static txHostHooks gxTimerHooks = {
 	fx_destroyTimer,
@@ -928,18 +920,17 @@ void fx_setTimer(txMachine* the, txNumber interval, txBoolean repeat)
 	if (repeat)
 		job->interval = interval;
 	job->when = ((txNumber)(tv.tv_sec) * 1000.0) + ((txNumber)(tv.tv_usec) / 1000.0) + interval;
-	job->function.kind = mxArgv(0)->kind;
-	job->function.value = mxArgv(0)->value;
+	job->self = xsNewHostObject(NULL);
+	job->function = xsArg(0);
 	xsRemember(job->function);
-	if (mxArgc > 2) {
-		job->argument.kind = mxArgv(2)->kind;
-		job->argument.value = mxArgv(2)->value;
-		xsRemember(job->argument);
-	}
-	fxNewHostObject(the, C_NULL);
-	fxSetHostData(the, the->stack, job);
-	fxSetHostHooks(the, the->stack, &gxTimerHooks);
-	mxPullSlot(mxResult);
+	if (xsToInteger(xsArgc) > 2)
+		job->argument = xsArg(2);
+	else
+		job->argument = xsUndefined;
+	xsSetHostData(job->self, job);
+	xsSetHostHooks(job->self,  &gxTimerHooks);
+	xsRemember(job->self);
+	xsResult = xsAccess(job->self);
 }
 
 void fx_setTimerCallback(txJob* job)
@@ -992,15 +983,6 @@ void fxDeleteMachinePlatform(txMachine* the)
 {
 }
 
-void fxMarkHost(txMachine* the, txMarkRoot markRoot)
-{
-	txJob* job = the->timerJobs;
-	while (job) {
-		fx_markTimer(the, job, markRoot);
-		job = job->next;
-	}
-}
-
 void fxQueuePromiseJobs(txMachine* the)
 {
 	the->promiseJobs = 1;
@@ -1023,26 +1005,33 @@ void fxRunLoop(txMachine* the)
 		if (!*address)
 			break;
 		while ((job = *address)) {
-			if (job->when <= when) {
-				(*job->callback)(job);
-				if (job->interval) {
-					job->when += job->interval;
+			if (job->the) {
+				if (job->when <= when) {
+					(*job->callback)(job);
+					if (job->the) {
+						if (job->interval) {
+							job->when += job->interval;
+						}
+						else {
+							xsBeginHost(job->the);
+							xsResult = xsAccess(job->self);
+							xsForget(job->self);
+							xsSetHostData(xsResult, NULL);
+							xsEndHost(job->the);
+							job->the = NULL;
+						}
+					}
+					break; // to run promise jobs queued by the timer in the same "tick"
 				}
-				else {
-					*address = job->next;
-					xsForget(job->function);
-					xsForget(job->argument);
-					c_free(job);
-				}
-				break;
+				address = &(job->next);
 			}
-			address = &(job->next);
+			else {
+				*address = job->next;
+				c_free(job);
+
+			}
 		}
 	}
-}
-
-void fxSweepHost(txMachine* the)
-{
 }
 
 void fxFulfillModuleFile(txMachine* the)
