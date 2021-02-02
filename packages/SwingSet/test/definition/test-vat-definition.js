@@ -12,7 +12,7 @@ function capargs(args, slots = []) {
   return capdata(JSON.stringify(args), slots);
 }
 
-test.failing('create with setup and buildRootObject', async t => {
+test('create with setup and buildRootObject', async t => {
   const config = {
     vats: {
       setup: {
