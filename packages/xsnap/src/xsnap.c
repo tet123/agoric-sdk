@@ -922,7 +922,6 @@ void fx_setTimer(txMachine* the, txNumber interval, txBoolean repeat)
 	job->when = ((txNumber)(tv.tv_sec) * 1000.0) + ((txNumber)(tv.tv_usec) / 1000.0) + interval;
 	job->self = xsNewHostObject(NULL);
 	job->function = xsArg(0);
-	xsRemember(job->function);
 	if (xsToInteger(xsArgc) > 2)
 		job->argument = xsArg(2);
 	else
