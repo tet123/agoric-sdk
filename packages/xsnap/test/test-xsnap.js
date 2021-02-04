@@ -73,6 +73,22 @@ test('evaluate error', async t => {
   await vat.terminate();
 });
 
+test('reject odd regex range', async t => {
+  const opts = options();
+  const vat = xsnap(opts);
+  await vat
+    .evaluate(
+      `const FILENAME_FILTER = /^((?:.*[( ])?)[:/\\w-_]*\\/(packages\\/.+)$/;`,
+    )
+    .then(_ => {
+      t.fail('should throw');
+    })
+    .catch(_ => {
+      t.pass();
+    });
+  await vat.terminate();
+});
+
 test('idle includes setImmediate too', async t => {
   const opts = options();
   const vat = xsnap(opts);
@@ -233,7 +249,7 @@ test('fail to send command to already-terminated xnsap worker', async t => {
   const vat = xsnap({ ...xsnapOptions });
   await vat.terminate();
   await vat.evaluate(``).catch(err => {
-    t.is(err.message, 'xsnap test worker exited due to signal SIGTERM')
+    t.is(err.message, 'xsnap test worker exited due to signal SIGTERM');
   });
 });
 
@@ -258,7 +274,7 @@ test('abnormal termination', async t => {
   const hang = vat.evaluate(`for (;;) {}`).then(
     () => t.fail('command should not complete'),
     err => {
-      t.is(err.message, 'xsnap test worker exited due to signal SIGTERM')
+      t.is(err.message, 'xsnap test worker exited due to signal SIGTERM');
     },
   );
 
