@@ -89,6 +89,16 @@ test('reject odd regex range', async t => {
   await vat.terminate();
 });
 
+test('accept std regex range', async t => {
+  const opts = options();
+  const vat = xsnap(opts);
+  await vat.evaluate(
+    `const FILENAME_FILTER = /^((?:.*[( ])?)[:/\\w_-]*\\/(packages\\/.+)$/;`,
+  );
+  t.pass();
+  await vat.terminate();
+});
+
 test('idle includes setImmediate too', async t => {
   const opts = options();
   const vat = xsnap(opts);
