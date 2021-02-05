@@ -59,23 +59,18 @@ export { MathKind };
  * brand. The issuer and the brand mutually validate each other.
  */
 
-// Setup
-const getHelpersFromBrand = brand => {
-  const { mathKind } = brand;
-  assert.typeof(mathKind, 'string');
-
-  const mathHelpers = {
-    nat: natMathHelpers,
-    strSet: strSetMathHelpers,
-    set: setMathHelpers,
-  };
-  const helpers = mathHelpers[mathKind];
-  assert(helpers !== undefined, details`unrecognized mathKind: ${mathKind}`);
-  return helpers;
-};
-
-const getHelpers = amount => {
-  return getHelpersFromBrand(amount.brand);
+const sniffHelpers = value => {
+  if (typeof value === 'number') {
+    return natMathHelpers;
+  }
+  assert(
+    Array.isArray(value),
+    details`value ${value} must be a number or an array`,
+  );
+  if (typeof value[0] !== 'string') {
+    return setMathHelpers;
+  }
+  return strSetMathHelpers;
 };
 
 const optionalBrandCheck = (amount, brand) => {
@@ -94,7 +89,7 @@ const noCoerceMake = (value, brand) => {
 const M = {
   make: (allegedValue, brand) => {
     mustBeComparable(brand);
-    const value = getHelpersFromBrand(brand).doCoerce(allegedValue);
+    const value = sniffHelpers(allegedValue).doCoerce(allegedValue);
     const amount = harden({ brand, value });
     return amount;
   },
@@ -116,25 +111,28 @@ const M = {
     mustBeComparable(brand);
     return M.coerce(amount, brand).value;
   },
-  getEmpty: brand => {
-    mustBeComparable(brand);
-    return getHelpersFromBrand(brand).doGetEmpty();
+  makeEmpty: otherAmount => {
+    mustBeComparable(otherAmount.brand);
+    return sniffHelpers(otherAmount).doGetEmpty();
   },
   isEmpty: (amount, brand = undefined) => {
     optionalBrandCheck(amount, brand);
-    return getHelpers(amount).doIsEmpty(amount.value);
+    return sniffHelpers(amount).doIsEmpty(amount.value);
   },
   isGTE: (leftAmount, rightAmount, brand = undefined) => {
     optionalBrandCheck(leftAmount, brand);
     optionalBrandCheck(rightAmount, brand);
     assert.equal(leftAmount.brand, rightAmount.brand);
-    return getHelpers(leftAmount).doIsGTE(leftAmount.value, rightAmount.value);
+    return sniffHelpers(leftAmount).doIsGTE(
+      leftAmount.value,
+      rightAmount.value,
+    );
   },
   isEqual: (leftAmount, rightAmount, brand = undefined) => {
     optionalBrandCheck(leftAmount, brand);
     optionalBrandCheck(rightAmount, brand);
     assert.equal(leftAmount.brand, rightAmount.brand);
-    return getHelpers(leftAmount).doIsEqual(
+    return sniffHelpers(leftAmount).doIsEqual(
       leftAmount.value,
       rightAmount.value,
     );
@@ -144,7 +142,7 @@ const M = {
     optionalBrandCheck(rightAmount, brand);
     assert.equal(leftAmount.brand, rightAmount.brand);
     return noCoerceMake(
-      getHelpers(leftAmount).doIsAdd(leftAmount.value, rightAmount.value),
+      sniffHelpers(leftAmount).doAdd(leftAmount.value, rightAmount.value),
       leftAmount.brand,
     );
   },
@@ -153,7 +151,7 @@ const M = {
     optionalBrandCheck(rightAmount, brand);
     assert.equal(leftAmount.brand, rightAmount.brand);
     return noCoerceMake(
-      getHelpers(leftAmount).doIsSubtract(leftAmount.value, rightAmount.value),
+      sniffHelpers(leftAmount).doSubtract(leftAmount.value, rightAmount.value),
       leftAmount.brand,
     );
   },

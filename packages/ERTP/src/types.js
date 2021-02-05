@@ -58,7 +58,7 @@
  * @property {(amount: Amount, brand: Brand) => Value} getValue
  * Extract and return the value.
  *
- * @property {(brand: Brand) => Amount} getEmpty
+ * @property {(otherAmount: Amount) => Amount} makeEmpty
  * Return the amount representing an empty amount. This is the
  * identity element for MathHelpers.add and MatHelpers.subtract.
  *
